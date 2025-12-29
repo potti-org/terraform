@@ -52,15 +52,15 @@ variable "ssh_public_key" {
 
 
 variable "regions" {
-  description = "Public Cloud regions where instances are deployed"
-  type        = list
-  default     = ["EU-WEST-PAR"]
-}
-
-variable "region_zones" {
-  description = "Public Cloud regions where instances are deployed"
-  type        = list
-  default     = ["EU-WEST-PAR-A", "EU-WEST-PAR-B"]
+  description = "Public Cloud regions with their availability zones"
+  type = map(object({
+    availability_zones = list(string)
+  }))
+  default = {
+    "EU-WEST-PAR" = {
+      availability_zones = ["EU-WEST-PAR-A", "EU-WEST-PAR-B"]
+    }
+  }
 }
 
 variable "app_server" {

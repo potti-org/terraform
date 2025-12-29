@@ -1,6 +1,6 @@
 resource "openstack_networking_port_v2" "bastion_port" {
   name           = "bastion_port"
-  region         = var.regions[0]
+  region         = keys(var.regions)[0]
   network_id     = openstack_networking_network_v2.private_network_potti_par.id
   admin_state_up = "true"
 
@@ -15,9 +15,9 @@ resource "openstack_compute_instance_v2" "bastion" {
   provider    = openstack
   image_name  = var.bastion_server.image
   flavor_name = var.bastion_server.flavor
-  region      = var.regions[0]
+  region      = keys(var.regions)[0]
   availability_zone = lower(var.bastion_server.region)
-  key_pair    = openstack_compute_keypair_v2.ssh_key[var.regions[0]].name
+  key_pair    = openstack_compute_keypair_v2.ssh_key[keys(var.regions)[0]].name
   network {
     port        = openstack_networking_port_v2.bastion_port.id
   }
