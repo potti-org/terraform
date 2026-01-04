@@ -11,7 +11,7 @@ resource "openstack_networking_network_v2" "private_network_potti_par" {
 
 resource "openstack_networking_subnet_v2" "private_network_potti_par_subnet" {
   name          = "private_network_potti_par_subnet"
-  region        = "EU-WEST-PAR"
+  region        = keys(var.regions)[0]
   network_id    = openstack_networking_network_v2.private_network_potti_par.id
   cidr          = var.private_network_potti_par.cidr
   ip_version    = 4
@@ -22,4 +22,22 @@ resource "openstack_networking_subnet_v2" "private_network_potti_par_subnet" {
     end   = cidrhost(var.private_network_potti_par.cidr, 99)
   }
   depends_on    = [ openstack_networking_network_v2.private_network_potti_par ]
+}
+
+data "openstack_networking_network_v2" "ext_net" {
+  name     = "Ext-Net"
+  region   = keys(var.regions)[0]
+  external = true
+}
+
+resource "openstack_networking_router_v2" "potti_router" {
+  region              = keys(var.regions)[0]
+  name                = "potti_floating_ip_router_par"
+  external_network_id = data.openstack_networking_network_v2.ext_net.id
+}
+
+resource "openstack_networking_router_interface_v2" "potti_router_interface" {
+  region    = keys(var.regions)[0]
+  router_id = openstack_networking_router_v2.potti_router.id
+  subnet_id = openstack_networking_subnet_v2.private_network_potti_par_subnet.id
 }

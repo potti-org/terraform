@@ -11,6 +11,7 @@ locals {
         availability_zone = az
         zone_index        = az_index
         instance_index    = instance_index
+        ip_address        = cidrhost(var.private_network_potti_par.cidr, (az_index + 1) * 256 + instance_index) 
       }
     ]
   ])
@@ -24,13 +25,34 @@ resource "openstack_networking_port_v2" "app_server_port" {
   region         = keys(var.regions)[0]
   network_id     = openstack_networking_network_v2.private_network_potti_par.id
   admin_state_up = "true"
+  security_group_ids = [
+        openstack_networking_secgroup_v2.web_access_secgroup.id, 
+        openstack_networking_secgroup_v2.bastion_access_secgroup.id
+    ]
 
   fixed_ip {
     # Calculate IP based on zone index and instance index within the zone
     # Formula: (zone_index + 1) * 256 + instance_index
-    ip_address = cidrhost(var.private_network_potti_par.cidr, (each.value.zone_index + 1) * 256 + each.value.instance_index) 
-    #subnet_id = openstack_networking_subnet_v2.private_network_potti_par_subnet.id
+    ip_address = each.value.ip_address
   }
+}
+
+resource "openstack_networking_floatingip_v2" "app_server_floating_ip" {
+  for_each = {
+    for vm in local.server_name_list : "${vm.name}" => "${vm}"
+  }
+  region   = keys(var.regions)[0]
+  pool     = "Ext-Net"
+}
+
+resource "openstack_networking_floatingip_associate_v2" "app_server_floating_ip_association" {
+  for_each = {
+    for vm in local.server_name_list : "${vm.name}" => "${vm}"
+  }
+  floating_ip = openstack_networking_floatingip_v2.app_server_floating_ip[each.value.name].address
+  port_id     = openstack_networking_port_v2.app_server_port[each.value.name].id
+  region      = keys(var.regions)[0]
+  depends_on  = [ openstack_networking_router_interface_v2.potti_router_interface ]
 }
 
 resource "openstack_compute_instance_v2" "app_server" {
