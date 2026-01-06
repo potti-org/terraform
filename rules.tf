@@ -58,6 +58,6 @@ resource "openstack_networking_secgroup_rule_v2" "https_allow_in" {
   protocol          = "tcp"
   port_range_min    = 443
   port_range_max    = 443
-  remote_ip_prefix  = "0.0.0.0/0"
+  remote_ip_prefix  = var.private_network_potti_par.cidr
   security_group_id = openstack_networking_secgroup_v2.web_access_secgroup.id
 }

@@ -8,6 +8,7 @@ locals {
     for az_index, az in local.all_availability_zones : [
       for instance_index in range(1, var.app_server.count + 1) : {
         name              = lower("${var.app_server.name}_${az}_${instance_index}")
+        subdomain         = lower("app-${az}-${instance_index}")
         availability_zone = az
         zone_index        = az_index
         instance_index    = instance_index

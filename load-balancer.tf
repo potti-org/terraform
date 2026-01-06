@@ -80,7 +80,7 @@ resource "openstack_lb_monitor_v2" "potti_loadbalancer_https_monitor" {
     name           = "potti_loadbalancer_https_monitor"
     pool_id        = openstack_lb_pool_v2.potti_loadbalancer_https_pool.id
     type           = "HTTPS"
-    url_path       = "/health"
+    url_path       = "/up"
     domain_name    = "staging.potti.fr"
     http_method    = "GET"
     http_version   = "1.1"
