@@ -23,14 +23,15 @@ resource "ovh_cloud_project_database" "potti_postgres" {
     subnet_id  = openstack_networking_subnet_v2.private_network_potti_par_subnet.id
   }
 
+  deletion_protection = true
 
-  advanced_configuration = {
-  }
+    advanced_configuration = {
+    }
 
-  lifecycle {
-    prevent_destroy = true
-    ignore_changes = [advanced_configuration]
-  }
+    lifecycle {
+      prevent_destroy = true
+      ignore_changes = [advanced_configuration]
+    }
 }
 
 resource "ovh_cloud_project_database_postgresql_user" "postgres_potti_production_user" {

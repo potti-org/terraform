@@ -84,3 +84,24 @@ variable "bastion_server" {
     ip_address        = "10.101.3.50"
   }
 }
+
+variable "s3_cors_rules" {
+  description = "CORS rules for the S3 bucket"
+  type = list(object({
+    AllowedHeaders = list(string)
+    AllowedMethods = list(string)
+    AllowedOrigins = list(string)
+  }))
+  default = [
+    {
+      AllowedMethods = ["GET"]
+      AllowedOrigins = ["*"]
+      AllowedHeaders = ["*"]
+    },
+    {
+      AllowedMethods = ["PUT", "POST"]
+      AllowedOrigins = ["https://potti.co", "https://staging.potti.co"]
+      AllowedHeaders = ["*"]
+    }
+  ]
+}

@@ -16,6 +16,11 @@ required_version    = ">= 0.14.0"
       version = "~> 5"
     }
 
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.2"
+    }
+
     # aws = {
     #   source  = "hashicorp/aws"
     #   version = "~> 6.3"
