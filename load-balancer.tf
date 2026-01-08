@@ -84,7 +84,7 @@ resource "openstack_lb_monitor_v2" "potti_loadbalancer_https_monitor" {
     domain_name    = "staging.potti.fr"
     http_method    = "GET"
     http_version   = "1.1"
-    expected_codes = "301" # temporary because of SSL redirect
+    expected_codes = "200"
     delay          = 10
     timeout        = 2
     max_retries    = 3
