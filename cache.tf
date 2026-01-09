@@ -39,7 +39,7 @@ resource "ovh_cloud_project_database_valkey_user" "cache_user" {
   cluster_id    = ovh_cloud_project_database.potti_cache.id
   categories    = ["+@all","-@dangerous"]
   channels        = ["*"]
-  commands      = ["+get","+set", "+ping", "+info", "+client"]
+  commands      = ["+get","+set", "+ping", "+info", "+client", "+flushdb"]
   keys          = ["*"]
   name          = "potti_cache_user"
 }
