@@ -1,6 +1,6 @@
 resource "openstack_networking_port_v2" "bastion_port" {
   name           = "bastion_port"
-  region         = keys(var.regions)[0]
+  region         = local.primary_region
   network_id     = openstack_networking_network_v2.private_network_potti_par.id
   admin_state_up = "true"
 
@@ -11,23 +11,23 @@ resource "openstack_networking_port_v2" "bastion_port" {
 }
 
 resource "openstack_compute_instance_v2" "bastion" {
-  name        = var.bastion_server.name
-  provider    = openstack
-  image_name  = var.bastion_server.image
-  flavor_name = var.bastion_server.flavor
-  region      = keys(var.regions)[0]
+  name              = var.bastion_server.name
+  provider          = openstack
+  image_name        = var.bastion_server.image
+  flavor_name       = var.bastion_server.flavor
+  region            = local.primary_region
   availability_zone = lower(var.bastion_server.region)
-  key_pair    = openstack_compute_keypair_v2.ssh_key[keys(var.regions)[0]].name
+  key_pair          = openstack_compute_keypair_v2.ssh_key[local.primary_region].name
   network {
-    port        = openstack_networking_port_v2.bastion_port.id
+    port = openstack_networking_port_v2.bastion_port.id
   }
   network {
-    name        = "Ext-Net"
+    name = "Ext-Net"
   }
-  depends_on  = [ openstack_networking_port_v2.bastion_port ]
+  depends_on = [openstack_networking_port_v2.bastion_port]
   lifecycle {
-      ignore_changes = [
-        image_name
+    ignore_changes = [
+      image_name
     ]
   }
   stop_before_destroy = true

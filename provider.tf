@@ -1,5 +1,5 @@
 terraform {
-required_version    = ">= 0.14.0"
+  required_version = ">= 0.14.0"
   required_providers {
     openstack = {
       source  = "terraform-provider-openstack/openstack"
@@ -29,10 +29,10 @@ required_version    = ">= 0.14.0"
 }
 
 provider "ovh" {
-  endpoint      = "ovh-eu"
-  application_key     = var.ovh_app_key
+  endpoint           = "ovh-eu"
+  application_key    = var.ovh_app_key
   application_secret = var.ovh_app_secret
-  consumer_key  = var.ovh_app_consumer_key
+  consumer_key       = var.ovh_app_consumer_key
 }
 
 provider "openstack" {

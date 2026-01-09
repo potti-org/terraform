@@ -1,0 +1,32 @@
+# Example Terraform Variables File
+# Copy this file to my_vars.tfvars and fill in your values
+# DO NOT commit my_vars.tfvars to version control!
+
+#
+# OVH API Credentials
+# Get these from https://api.ovh.com/createToken/
+#
+ovh_app_key          = "your-ovh-app-key"
+ovh_app_secret       = "your-ovh-app-secret"
+ovh_app_consumer_key = "your-ovh-consumer-key"
+
+#
+# OpenStack Credentials
+# Get these from OVH Public Cloud > Users & Roles
+#
+os_username    = "user-XXXXX"
+os_password    = "your-openstack-password"
+os_tenant_id   = "your-tenant-id"
+os_tenant_name = "your-tenant-name"
+
+#
+# Cloudflare API Token
+# Create at https://dash.cloudflare.com/profile/api-tokens
+#
+cloudflare_api_token = "your-cloudflare-api-token"
+
+#
+# SSH Keys
+#
+ssh_public_key          = "ssh-rsa AAAA... your-email@example.com"
+instance_ssh_public_key = "ssh-ed25519 AAAA... instance-key"

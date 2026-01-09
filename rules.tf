@@ -5,7 +5,7 @@ resource "openstack_networking_secgroup_v2" "bastion_access_secgroup" {
 }
 
 resource "openstack_networking_secgroup_rule_v2" "bastion_allow_ssh_in" {
-  region = keys(var.regions)[0]
+  region            = keys(var.regions)[0]
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
@@ -35,7 +35,7 @@ resource "openstack_networking_secgroup_rule_v2" "forge_allow_ssh_in" {
   for_each = {
     for ip in local.forge_ip_addresses : "${ip}" => "${ip}"
   }
-  region = keys(var.regions)[0]
+  region            = keys(var.regions)[0]
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
@@ -52,7 +52,7 @@ resource "openstack_networking_secgroup_v2" "web_access_secgroup" {
 }
 
 resource "openstack_networking_secgroup_rule_v2" "https_allow_in" {
-  region = keys(var.regions)[0]
+  region            = keys(var.regions)[0]
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"

@@ -4,7 +4,7 @@ resource "cloudflare_dns_record" "bastion_dns_record" {
   type    = "A"
   ttl     = 60
   proxied = false
-  content   = openstack_compute_instance_v2.bastion.network.1.fixed_ip_v4
+  content = openstack_compute_instance_v2.bastion.network.1.fixed_ip_v4
 }
 
 resource "cloudflare_dns_record" "loadbalancer_dns_record" {
@@ -13,5 +13,5 @@ resource "cloudflare_dns_record" "loadbalancer_dns_record" {
   type    = "A"
   ttl     = 1
   proxied = true
-  content   = openstack_networking_floatingip_v2.potti_loadbalancer_floating_ip.address
+  content = openstack_networking_floatingip_v2.potti_loadbalancer_floating_ip.address
 }
