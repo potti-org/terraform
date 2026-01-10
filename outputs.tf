@@ -92,12 +92,32 @@ output "cache_endpoint" {
 
 output "s3_bucket_name" {
   description = "Name of the S3 bucket"
-  value       = ovh_cloud_project_storage.s3_bucket.name
+  value       = local.s3_bucket_name
 }
 
 output "s3_bucket_region" {
   description = "Region of the S3 bucket"
-  value       = ovh_cloud_project_storage.s3_bucket.region_name
+  value       = local.primary_region
+}
+
+output "s3_bucket_virtual_host" {
+  description = "Virtual host URL of the S3 bucket"
+  value       = var.s3_bucket_config.replication_enabled ? ovh_cloud_project_storage.s3_bucket_replicated[0].virtual_host : ovh_cloud_project_storage.s3_bucket[0].virtual_host
+}
+
+output "s3_replica_bucket_name" {
+  description = "Name of the S3 replica bucket (if replication is enabled)"
+  value       = var.s3_bucket_config.replication_enabled ? "${var.s3_bucket_config.name}-replica" : null
+}
+
+output "s3_replica_bucket_region" {
+  description = "Region of the S3 replica bucket (if replication is enabled)"
+  value       = var.s3_bucket_config.replication_enabled ? var.s3_bucket_config.replication_region : null
+}
+
+output "s3_replica_endpoint" {
+  description = "S3 replica endpoint URL (if replication is enabled)"
+  value       = var.s3_bucket_config.replication_enabled ? "https://s3.${lower(var.s3_bucket_config.replication_region)}.io.cloud.ovh.net" : null
 }
 
 output "s3_user_credential_access_key" {

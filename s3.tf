@@ -1,50 +1,116 @@
+#
+# Primary S3 Bucket (without replication - base bucket)
+#
 resource "ovh_cloud_project_storage" "s3_bucket" {
+  count = var.s3_bucket_config.replication_enabled ? 0 : 1
+
   service_name = var.os_tenant_id
   region_name  = local.primary_region
-  name         = "potti-temporary-bucket"
+  name         = var.s3_bucket_config.name
+  versioning   = { status = var.s3_bucket_config.versioning_enabled ? "enabled" : "disabled" }
+  encryption   = { sse_algorithm = var.s3_bucket_config.encryption_algorithm }
+
+  lifecycle {
+    ignore_changes  = [objects]
+  }
 }
 
+#
+# Primary S3 Bucket with Replication
+# When replication is enabled, we configure it directly on the bucket
+# The replica bucket is automatically created by OVH when replication is configured
+#
+resource "ovh_cloud_project_storage" "s3_bucket_replicated" {
+  count = var.s3_bucket_config.replication_enabled ? 1 : 0
+
+  service_name = var.os_tenant_id
+  region_name  = local.primary_region
+  name         = var.s3_bucket_config.name
+  versioning   = { status = "enabled" } # Required for replication
+  encryption   = { sse_algorithm = var.s3_bucket_config.encryption_algorithm }
+  replication = {
+    rules = [
+      {
+        id                        = "replicate-to-${var.s3_bucket_config.replication_region}"
+        status                    = "enabled"
+        delete_marker_replication = var.s3_bucket_config.replicate_delete_markers ? "enabled" : "disabled"
+        priority                  = 1
+        destination = {
+          name                           = "${var.s3_bucket_config.name}-replica"
+          region                         = var.s3_bucket_config.replication_region
+          storage_class                  = var.s3_bucket_config.replication_storage_class
+          remove_on_main_bucket_deletion = var.s3_bucket_config.remove_replica_on_deletion
+        }
+      }
+    ]
+  }
+
+  lifecycle {
+    ignore_changes  = [objects]
+  }
+}
+
+#
+# Local values for S3 bucket reference (to handle conditional resources)
+#
+locals {
+  s3_bucket_name = var.s3_bucket_config.replication_enabled ? ovh_cloud_project_storage.s3_bucket_replicated[0].name : ovh_cloud_project_storage.s3_bucket[0].name
+  s3_bucket_id   = var.s3_bucket_config.replication_enabled ? ovh_cloud_project_storage.s3_bucket_replicated[0].id : ovh_cloud_project_storage.s3_bucket[0].id
+}
+
+#
+# S3 User and Credentials
+#
 resource "ovh_cloud_project_user" "s3_user" {
   service_name = var.os_tenant_id
   role_name    = "objectstore_operator"
-  description  = "potti-temporary-bucket-user"
-  depends_on   = [ovh_cloud_project_storage.s3_bucket]
+  description  = "${var.s3_bucket_config.name}-user"
 }
 
 resource "ovh_cloud_project_user_s3_credential" "s3_user_cred" {
   service_name = var.os_tenant_id
-
-  user_id    = ovh_cloud_project_user.s3_user.id
-  depends_on = [ovh_cloud_project_user.s3_user]
+  user_id      = ovh_cloud_project_user.s3_user.id
+  depends_on   = [ovh_cloud_project_user.s3_user]
 }
 
+#
+# S3 User Policy
+#
 resource "ovh_cloud_project_user_s3_policy" "s3_user_policy" {
   service_name = var.os_tenant_id
   user_id      = ovh_cloud_project_user.s3_user.id
   policy = jsonencode({
-    "Statement" : [{
-      "Action" : ["s3:*"],
-      "Effect" : "Allow",
-      "Resource" : ["arn:aws:s3:::${ovh_cloud_project_storage.s3_bucket.name}", "arn:aws:s3:::${ovh_cloud_project_storage.s3_bucket.name}/*"],
-      "Sid" : "AdminContainer"
-    }]
+    "Statement" : concat(
+      [{
+        "Action" : var.s3_bucket_config.user_actions,
+        "Effect" : "Allow",
+        "Resource" : [
+          "arn:aws:s3:::${var.s3_bucket_config.name}",
+          "arn:aws:s3:::${var.s3_bucket_config.name}/*"
+        ],
+        "Sid" : "PrimaryBucketAccess"
+      }],
+    )
   })
 
   depends_on = [ovh_cloud_project_user.s3_user]
-
 }
 
-# CORS configuration for the S3 bucket
+#
+# CORS Configuration
 # Note: OVH provider doesn't support CORS natively, so we use a null_resource with AWS CLI
+#
 resource "null_resource" "s3_cors_configuration" {
+  count = length(var.s3_cors_rules) > 0 ? 1 : 0
+
   triggers = {
-    bucket_name = ovh_cloud_project_storage.s3_bucket.name
+    bucket_name = local.s3_bucket_name
     cors_hash   = md5(jsonencode(var.s3_cors_rules))
   }
 
   provisioner "local-exec" {
     command = <<-EOT
-      cat > /tmp/cors-config-${ovh_cloud_project_storage.s3_bucket.name}.json << 'EOF'
+      cat > /tmp/cors-config-${local.s3_bucket_name}.json << 'EOF'
       {
         "CORSRules": ${jsonencode(var.s3_cors_rules)}
       }
@@ -53,16 +119,17 @@ resource "null_resource" "s3_cors_configuration" {
       AWS_ACCESS_KEY_ID="${ovh_cloud_project_user_s3_credential.s3_user_cred.access_key_id}" \
       AWS_SECRET_ACCESS_KEY="${ovh_cloud_project_user_s3_credential.s3_user_cred.secret_access_key}" \
       aws s3api put-bucket-cors \
-        --bucket "${ovh_cloud_project_storage.s3_bucket.name}" \
-        --cors-configuration file:///tmp/cors-config-${ovh_cloud_project_storage.s3_bucket.name}.json \
+        --bucket "${local.s3_bucket_name}" \
+        --cors-configuration file:///tmp/cors-config-${local.s3_bucket_name}.json \
         --endpoint-url "https://s3.${lower(local.primary_region)}.io.cloud.ovh.net"
       
-      rm -f /tmp/cors-config-${ovh_cloud_project_storage.s3_bucket.name}.json
+      rm -f /tmp/cors-config-${local.s3_bucket_name}.json
     EOT
   }
 
   depends_on = [
     ovh_cloud_project_storage.s3_bucket,
+    ovh_cloud_project_storage.s3_bucket_replicated,
     ovh_cloud_project_user_s3_credential.s3_user_cred,
     ovh_cloud_project_user_s3_policy.s3_user_policy
   ]

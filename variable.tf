@@ -153,6 +153,24 @@ variable "bastion_server" {
   }
 }
 
+variable "ci_server" {
+  description = "CI server configuration"
+  type = object({
+    image      = string
+    flavor     = string
+    name       = string
+    region     = string
+    ip_address = string
+  })
+  default = {
+    image      = "Ubuntu 24.04"
+    flavor     = "c3-16"
+    name       = "potti_ci"
+    region     = "EU-WEST-PAR-C"
+    ip_address = "10.101.3.60"
+  }
+}
+
 #
 # Load Balancer Configuration
 #
@@ -170,6 +188,51 @@ variable "load_balancer_config" {
 #
 # S3 Configuration
 #
+
+variable "s3_bucket_config" {
+  description = "S3 bucket configuration including replication settings"
+  type = object({
+    name                       = string
+    versioning_enabled         = bool
+    encryption_algorithm       = string
+    user_actions               = list(string)
+    replication_enabled        = bool
+    replication_region         = optional(string)
+    replication_storage_class  = optional(string)
+    replication_prefix         = optional(string)
+    replicate_delete_markers   = optional(bool)
+    remove_replica_on_deletion = optional(bool)
+  })
+  default = {
+    name                       = "potti-bucket"
+    versioning_enabled         = true
+    encryption_algorithm       = "AES256"
+    user_actions               = ["s3:*"]
+    replication_enabled        = true
+    replication_region         = "GRA"
+    replication_storage_class  = "STANDARD_IA"
+    replication_prefix         = null
+    replicate_delete_markers   = true
+    remove_replica_on_deletion = false
+  }
+
+  validation {
+    condition     = var.s3_bucket_config.encryption_algorithm == "AES256" || var.s3_bucket_config.encryption_algorithm == "aws:kms"
+    error_message = "Encryption algorithm must be 'AES256' or 'aws:kms'."
+  }
+
+  validation {
+    condition     = !var.s3_bucket_config.replication_enabled || (var.s3_bucket_config.replication_enabled && var.s3_bucket_config.replication_region != null)
+    error_message = "replication_region is required when replication_enabled is true."
+  }
+
+  validation {
+    condition = !var.s3_bucket_config.replication_enabled || contains([
+      "HIGH_PERF", "STANDARD", "STANDARD_IA"
+    ], coalesce(var.s3_bucket_config.replication_storage_class, "STANDARD"))
+    error_message = "replication_storage_class must be a valid S3 storage class."
+  }
+}
 
 variable "s3_cors_rules" {
   description = "CORS rules for the S3 bucket"
@@ -190,4 +253,84 @@ variable "s3_cors_rules" {
       AllowedHeaders = ["*"]
     }
   ]
+}
+
+#
+# Database Configuration
+#
+
+variable "postgres_config" {
+  description = "PostgreSQL database configuration"
+  type = object({
+    description         = string
+    version             = string
+    plan                = string
+    flavor              = string
+    backup_time         = string
+    maintenance_time    = string
+    backup_regions      = list(string)
+    deletion_protection = bool
+    user_name           = string
+  })
+  default = {
+    description         = "potti_postgres"
+    version             = "18"
+    plan                = "production"
+    flavor              = "b3-8"
+    backup_time         = "02:00:00"
+    maintenance_time    = "03:00:00"
+    backup_regions      = ["EU-WEST-PAR", "GRA"]
+    deletion_protection = true
+    user_name           = "potti_production"
+  }
+
+  validation {
+    condition     = can(regex("^[0-9]{2}:[0-9]{2}:[0-9]{2}$", var.postgres_config.backup_time))
+    error_message = "backup_time must be in HH:MM:SS format."
+  }
+
+  validation {
+    condition     = can(regex("^[0-9]{2}:[0-9]{2}:[0-9]{2}$", var.postgres_config.maintenance_time))
+    error_message = "maintenance_time must be in HH:MM:SS format."
+  }
+}
+
+#
+# Cache Configuration
+#
+
+variable "valkey_config" {
+  description = "Valkey cache configuration"
+  type = object({
+    description         = string
+    version             = string
+    plan                = string
+    flavor              = string
+    backup_time         = string
+    maintenance_time    = string
+    backup_regions      = list(string)
+    deletion_protection = bool
+    user_name           = string
+  })
+  default = {
+    description         = "potti_cache"
+    version             = "8.1"
+    plan                = "production"
+    flavor              = "b3-8"
+    backup_time         = "02:00:00"
+    maintenance_time    = "03:00:00"
+    backup_regions      = ["EU-WEST-PAR", "GRA"]
+    deletion_protection = true
+    user_name           = "potti_cache_user"
+  }
+
+  validation {
+    condition     = can(regex("^[0-9]{2}:[0-9]{2}:[0-9]{2}$", var.valkey_config.backup_time))
+    error_message = "backup_time must be in HH:MM:SS format."
+  }
+
+  validation {
+    condition     = can(regex("^[0-9]{2}:[0-9]{2}:[0-9]{2}$", var.valkey_config.maintenance_time))
+    error_message = "maintenance_time must be in HH:MM:SS format."
+  }
 }

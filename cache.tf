@@ -1,10 +1,10 @@
 resource "ovh_cloud_project_database" "potti_cache" {
   service_name = var.os_tenant_id
-  description  = "potti_cache"
+  description  = var.valkey_config.description
   engine       = "valkey"
-  version      = "8.1"
-  plan         = "production"
-  flavor       = "b3-8"
+  version      = var.valkey_config.version
+  plan         = var.valkey_config.plan
+  flavor       = var.valkey_config.flavor
 
   ip_restrictions {
     description = "Potti private network"
@@ -23,7 +23,10 @@ resource "ovh_cloud_project_database" "potti_cache" {
     subnet_id  = local.db_network_config.subnet_id
   }
 
-  deletion_protection = true
+  deletion_protection = var.valkey_config.deletion_protection
+  backup_time         = var.valkey_config.backup_time
+  maintenance_time    = var.valkey_config.maintenance_time
+  backup_regions      = var.valkey_config.backup_regions
 
   advanced_configuration = {
   }
@@ -41,5 +44,5 @@ resource "ovh_cloud_project_database_valkey_user" "cache_user" {
   channels     = ["*"]
   commands     = ["+get", "+set", "+ping", "+info", "+client", "+flushdb"]
   keys         = ["*"]
-  name         = "potti_cache_user"
+  name         = var.valkey_config.user_name
 }

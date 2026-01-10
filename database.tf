@@ -1,10 +1,10 @@
 resource "ovh_cloud_project_database" "potti_postgres" {
   service_name = var.os_tenant_id
-  description  = "potti_postgres"
+  description  = var.postgres_config.description
   engine       = "postgresql"
-  version      = "18"
-  plan         = "production"
-  flavor       = "b3-8"
+  version      = var.postgres_config.version
+  plan         = var.postgres_config.plan
+  flavor       = var.postgres_config.flavor
 
   ip_restrictions {
     description = "Potti private network"
@@ -23,7 +23,11 @@ resource "ovh_cloud_project_database" "potti_postgres" {
     subnet_id  = local.db_network_config.subnet_id
   }
 
-  deletion_protection = true
+  deletion_protection = var.postgres_config.deletion_protection
+
+  backup_time      = var.postgres_config.backup_time
+  maintenance_time = var.postgres_config.maintenance_time
+  backup_regions   = var.postgres_config.backup_regions
 
   advanced_configuration = {
   }
@@ -37,7 +41,7 @@ resource "ovh_cloud_project_database" "potti_postgres" {
 resource "ovh_cloud_project_database_postgresql_user" "postgres_potti_production_user" {
   service_name = ovh_cloud_project_database.potti_postgres.service_name
   cluster_id   = ovh_cloud_project_database.potti_postgres.id
-  name         = "potti_production"
+  name         = var.postgres_config.user_name
 }
 
 # Managed OVH user
