@@ -86,7 +86,9 @@ resource "ovh_cloud_project_user_s3_policy" "s3_user_policy" {
         "Effect" : "Allow",
         "Resource" : [
           "arn:aws:s3:::${var.s3_bucket_config.name}",
-          "arn:aws:s3:::${var.s3_bucket_config.name}/*"
+          "arn:aws:s3:::${var.s3_bucket_config.name}/*",
+          "arn:aws:s3:::potti-production",
+          "arn:aws:s3:::potti-production/*"
         ],
         "Sid" : "PrimaryBucketAccess"
       }],

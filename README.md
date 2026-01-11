@@ -313,7 +313,7 @@ All infrastructure components ship logs to **[OVH Logs Data Platform (LDP)](http
 | Record | Type | Target | Proxied |
 |--------|------|--------|---------|
 | `bastion.potti.fr` | A | Bastion public IP | No |
-| `staging.potti.fr` | A | Load Balancer floating IP | Yes (Cloudflare) |
+| `potti.fr` | A | Load Balancer floating IP | Yes (Cloudflare) |
 
 ---
 

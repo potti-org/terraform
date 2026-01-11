@@ -181,7 +181,7 @@ variable "load_balancer_config" {
     health_check_domain = string
   })
   default = {
-    health_check_domain = "staging.potti.fr"
+    health_check_domain = "potti.fr"
   }
 }
 
@@ -204,7 +204,7 @@ variable "s3_bucket_config" {
     remove_replica_on_deletion = optional(bool)
   })
   default = {
-    name                       = "potti-bucket"
+    name                       = "potti-storage"
     versioning_enabled         = true
     encryption_algorithm       = "AES256"
     user_actions               = ["s3:*"]

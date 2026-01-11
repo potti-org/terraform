@@ -8,7 +8,7 @@ resource "cloudflare_dns_record" "bastion_dns_record" {
 }
 
 resource "cloudflare_dns_record" "loadbalancer_dns_record" {
-  name    = "staging"
+  name    = "potti.co" # potti.co
   zone_id = "8a91acbad3689fb5e9a23793c5f0470d"
   type    = "A"
   ttl     = 1

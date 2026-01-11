@@ -18,6 +18,7 @@ resource "openstack_compute_instance_v2" "bastion" {
   region            = local.primary_region
   availability_zone = lower(var.bastion_server.region)
   key_pair          = openstack_compute_keypair_v2.ssh_key[local.primary_region].name
+  security_groups   = [openstack_networking_secgroup_v2.bastion_french_only_secgroup.name]
   network {
     port = openstack_networking_port_v2.bastion_port.id
   }
