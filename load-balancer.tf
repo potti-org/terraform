@@ -75,18 +75,55 @@ resource "openstack_lb_member_v2" "potti_loadbalancer_https_member" {
   depends_on    = [openstack_lb_pool_v2.potti_loadbalancer_https_pool]
 }
 
-resource "openstack_lb_monitor_v2" "potti_loadbalancer_https_monitor" {
-  region         = local.primary_region
-  name           = "potti_loadbalancer_https_monitor"
-  pool_id        = openstack_lb_pool_v2.potti_loadbalancer_https_pool.id
-  type           = "HTTPS"
-  url_path       = "/up"
-  domain_name    = var.load_balancer_config.health_check_domain
-  http_method    = "GET"
-  http_version   = "1.1"
-  expected_codes = "200"
-  delay          = 10
-  timeout        = 2
-  max_retries    = 3
-  depends_on     = [openstack_lb_member_v2.potti_loadbalancer_https_member]
+#resource "openstack_lb_monitor_v2" "potti_loadbalancer_https_monitor" {
+#  region         = local.primary_region
+#  name           = "potti_loadbalancer_https_monitor"
+#  pool_id        = openstack_lb_pool_v2.potti_loadbalancer_https_pool.id
+#  type           = "PING"
+#  delay          = 10
+#  timeout        = 2
+#  max_retries    = 3
+#  depends_on     = [openstack_lb_member_v2.potti_loadbalancer_https_member]
+#}
+
+# IoT Sensor TCP Listener on port 49984
+resource "openstack_lb_listener_v2" "potti_loadbalancer_iot_listener" {
+  region          = local.primary_region
+  name            = "potti_loadbalancer_iot_listener"
+  protocol        = "TCP"
+  protocol_port   = 49984
+  loadbalancer_id = openstack_lb_loadbalancer_v2.potti_loadbalancer.id
+  depends_on      = [openstack_lb_loadbalancer_v2.potti_loadbalancer]
+}
+
+resource "openstack_lb_pool_v2" "potti_loadbalancer_iot_pool" {
+  region      = local.primary_region
+  name        = "potti_loadbalancer_iot_pool"
+  protocol    = "TCP"
+  lb_method   = "ROUND_ROBIN"
+  listener_id = openstack_lb_listener_v2.potti_loadbalancer_iot_listener.id
+  depends_on  = [openstack_lb_listener_v2.potti_loadbalancer_iot_listener]
+}
+
+resource "openstack_lb_member_v2" "potti_loadbalancer_iot_member" {
+  for_each = {
+    for vm in local.server_name_list : "${vm.name}" => "${vm}"
+  }
+  region        = local.primary_region
+  name          = "potti_loadbalancer_iot_member_${each.value.name}"
+  address       = each.value.ip_address
+  protocol_port = 49984
+  pool_id       = openstack_lb_pool_v2.potti_loadbalancer_iot_pool.id
+  depends_on    = [openstack_lb_pool_v2.potti_loadbalancer_iot_pool]
+}
+
+resource "openstack_lb_monitor_v2" "potti_loadbalancer_iot_monitor" {
+  region      = local.primary_region
+  name        = "potti_loadbalancer_iot_monitor"
+  pool_id     = openstack_lb_pool_v2.potti_loadbalancer_iot_pool.id
+  type        = "TCP"
+  delay       = 10
+  timeout     = 5
+  max_retries = 3
+  depends_on  = [openstack_lb_member_v2.potti_loadbalancer_iot_member]
 }

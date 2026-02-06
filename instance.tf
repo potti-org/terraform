@@ -28,7 +28,9 @@ resource "openstack_networking_port_v2" "app_server_port" {
   admin_state_up = "true"
   security_group_ids = [
     openstack_networking_secgroup_v2.web_access_secgroup.id,
-    openstack_networking_secgroup_v2.bastion_access_secgroup.id
+    openstack_networking_secgroup_v2.bastion_access_secgroup.id,
+    openstack_networking_secgroup_v2.tailscale_secgroup.id,
+    openstack_networking_secgroup_v2.app_tcp_direct_secgroup.id
   ]
 
   fixed_ip {
