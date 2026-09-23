@@ -36,7 +36,7 @@ resource "openstack_lb_l7policy_v2" "potti_http_to_https_policy" {
   region          = local.primary_region
   name            = "potti_http_to_https_policy"
   action          = "REDIRECT_PREFIX"
-  redirect_prefix = "https://${openstack_networking_floatingip_v2.potti_loadbalancer_floating_ip.address}"
+  redirect_prefix = "https://${cloudflare_dns_record.loadbalancer_dns_record.name}"
   listener_id     = openstack_lb_listener_v2.potti_loadbalancer_http_listener.id
   depends_on      = [openstack_lb_listener_v2.potti_loadbalancer_http_listener]
 }
