@@ -14,6 +14,14 @@ output "app_server_floating_ips" {
   }
 }
 
+output "app_server_health_check_urls" {
+  description = "Map of app server names to their direct /up health check URLs (Oh Dear)"
+  value = {
+    for name, record in cloudflare_dns_record.app_server_dns_record :
+    name => "http://${record.name}:${local.health_check_port}/up"
+  }
+}
+
 output "app_server_private_ips" {
   description = "Map of app server names to their private IPs"
   value = {

@@ -25,8 +25,11 @@ resource "openstack_compute_instance_v2" "ci" {
   }
   depends_on = [openstack_networking_port_v2.ci_port]
   lifecycle {
+    # Flavor is managed outside Terraform: never resize the live CI server.
     ignore_changes = [
-      image_name
+      image_name,
+      flavor_name,
+      flavor_id
     ]
   }
   stop_before_destroy = true

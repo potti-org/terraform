@@ -164,7 +164,7 @@ variable "ci_server" {
   })
   default = {
     image      = "Ubuntu 24.04"
-    flavor     = "c3-16"
+    flavor     = "c3-32"
     name       = "potti_ci"
     region     = "EU-WEST-PAR-C"
     ip_address = "10.101.3.60"

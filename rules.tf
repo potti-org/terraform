@@ -113,6 +113,18 @@ resource "openstack_networking_secgroup_rule_v2" "iot_allow_in" {
   security_group_id = openstack_networking_secgroup_v2.web_access_secgroup.id
 }
 
+# Port 20186 - LB health check (nginx plain HTTP, Laravel /up) from private network
+resource "openstack_networking_secgroup_rule_v2" "health_check_allow_in" {
+  region            = keys(var.regions)[0]
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = local.health_check_port
+  port_range_max    = local.health_check_port
+  remote_ip_prefix  = var.private_network_potti_par.cidr
+  security_group_id = openstack_networking_secgroup_v2.web_access_secgroup.id
+}
+
 resource "openstack_networking_secgroup_v2" "app_tcp_direct_secgroup" {
   name        = "app_tcp_direct_secgroup"
   region      = keys(var.regions)[0]
@@ -173,4 +185,47 @@ resource "openstack_networking_secgroup_rule_v2" "tailscale_stun_udp" {
   port_range_max    = 3478
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = openstack_networking_secgroup_v2.tailscale_secgroup.id
+}
+
+# Oh Dear uptime monitoring - direct access to each app server's /up on the
+# health check port (nginx only serves /up there). The IP list changes over time,
+# so it is fetched at plan time: https://ohdear.app/docs/faq/what-ips-does-oh-dear-monitor-from
+data "http" "ohdear_ips" {
+  url = "https://ohdear.app/used-ips.json"
+
+  request_headers = {
+    Accept = "application/json"
+  }
+
+  lifecycle {
+    postcondition {
+      condition     = self.status_code == 200 && length(jsondecode(self.response_body)) > 0
+      error_message = "Could not fetch the Oh Dear IP list, refusing to update the Oh Dear security group rules."
+    }
+  }
+}
+
+locals {
+  ohdear_ipv4_addresses = distinct(compact([
+    for server in jsondecode(data.http.ohdear_ips.response_body) : server.ipv4
+  ]))
+}
+
+resource "openstack_networking_secgroup_v2" "ohdear_health_check_secgroup" {
+  name        = "ohdear_health_check_secgroup"
+  region      = keys(var.regions)[0]
+  description = "Allow Oh Dear monitoring IPs to reach the health check port"
+}
+
+resource "openstack_networking_secgroup_rule_v2" "ohdear_health_check_allow_in" {
+  for_each = toset(local.ohdear_ipv4_addresses)
+
+  region            = keys(var.regions)[0]
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = local.health_check_port
+  port_range_max    = local.health_check_port
+  remote_ip_prefix  = format("%s/32", each.value)
+  security_group_id = openstack_networking_secgroup_v2.ohdear_health_check_secgroup.id
 }

@@ -30,7 +30,8 @@ resource "openstack_networking_port_v2" "app_server_port" {
     openstack_networking_secgroup_v2.web_access_secgroup.id,
     openstack_networking_secgroup_v2.bastion_access_secgroup.id,
     openstack_networking_secgroup_v2.tailscale_secgroup.id,
-    openstack_networking_secgroup_v2.app_tcp_direct_secgroup.id
+    openstack_networking_secgroup_v2.app_tcp_direct_secgroup.id,
+    openstack_networking_secgroup_v2.ohdear_health_check_secgroup.id
   ]
 
   fixed_ip {

@@ -76,22 +76,27 @@ resource "openstack_lb_member_v2" "potti_loadbalancer_https_member" {
   name          = "potti_loadbalancer_https_member_${each.value.name}"
   address       = each.value.ip_address
   protocol_port = 443
+  monitor_port  = local.health_check_port
   pool_id       = openstack_lb_pool_v2.potti_loadbalancer_https_pool.id
   depends_on    = [openstack_lb_pool_v2.potti_loadbalancer_https_pool]
 }
 
-# PROXYV2 pool + nginx `listen ... ssl proxy_protocol`: probes must send a
-# PROXY v2 header, then a TLS ClientHello. TLS-HELLO does that; HTTPS does not
-# (it speaks HTTP-over-TLS as if the pool were HTTPS).
+# Probes hit Laravel /up on a dedicated plain HTTP port (monitor_port on members).
+# With a monitor port set, haproxy sends no PROXY v2 header on checks, so a plain
+# HTTP check works. TCP / TLS-HELLO only proved nginx was alive, not the app.
 resource "openstack_lb_monitor_v2" "potti_loadbalancer_https_monitor" {
-  region      = local.primary_region
-  name        = "potti_loadbalancer_https_monitor"
-  pool_id     = openstack_lb_pool_v2.potti_loadbalancer_https_pool.id
-  type        = "TLS-HELLO"
-  delay       = 10
-  timeout     = 5
-  max_retries = 3
-  depends_on  = [openstack_lb_member_v2.potti_loadbalancer_https_member]
+  region           = local.primary_region
+  name             = "potti_loadbalancer_https_monitor"
+  pool_id          = openstack_lb_pool_v2.potti_loadbalancer_https_pool.id
+  type             = "HTTP"
+  http_method      = "GET"
+  url_path         = "/up"
+  expected_codes   = "200"
+  delay            = 5
+  timeout          = 3
+  max_retries      = 2
+  max_retries_down = 2
+  depends_on       = [openstack_lb_member_v2.potti_loadbalancer_https_member]
 }
 
 # IoT Sensor TCP Listener on port 49984
