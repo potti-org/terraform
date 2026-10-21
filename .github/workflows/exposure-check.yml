@@ -1,0 +1,20 @@
+name: Exposure check
+
+# Runs from a GitHub-hosted runner, i.e. from outside OVH, exactly like an attacker.
+# A failing run means a port opened on an app server or a mitigation disappeared.
+on:
+  schedule:
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check what the internet can reach
+        run: bash scripts/check-exposure.sh
