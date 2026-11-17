@@ -1,0 +1,5 @@
+subscription_id = "000000000-302a-4a8a-a277-f3801e22326d"
+# location      = "francecentral"
+# api_server_authorized_ip_ranges = ["203.0.113.10/32"]
+# spot_max_nodes = 8
+# dockerhub_cache_enabled = true  # after writing the Docker Hub secrets to Key Vault

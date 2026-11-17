@@ -1,0 +1,14 @@
+# Cluster autoscaler "priority" expander (enabled in main.tf auto_scaler_profile):
+# scale the Spot pool first, the on-demand pool only if Spot cannot be allocated.
+# Node groups are matched by VMSS name (aks-<pool>-<id>-vmss).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-autoscaler-priority-expander
+  namespace: kube-system
+data:
+  priorities: |-
+    50:
+      - .*-spot-.*
+    10:
+      - .*-regular-.*

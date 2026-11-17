@@ -1,0 +1,65 @@
+# gha-runner-scale-set for the potti-org organisation.
+#
+# Placeholders replaced by scripts/deploy-arc.sh: __RUNNER_IMAGE__,
+# __DOCKER_REGISTRY_MIRROR__. Name, org and limits come from --set flags there.
+
+githubConfigSecret: arc-github-app
+
+# No containerMode: the pod runs its own privileged dockerd (same model as the
+# OVH fleet), so the workflow's service containers keep working unchanged.
+
+listenerTemplate:
+  spec:
+    nodeSelector:
+      kubernetes.azure.com/mode: system
+    containers:
+      - name: listener
+
+template:
+  spec:
+    restartPolicy: Never
+    nodeSelector:
+      potti.ci/role: runner
+    tolerations:
+      - key: kubernetes.azure.com/scalesetpriority
+        operator: Equal
+        value: spot
+        effect: NoSchedule
+      - key: potti.ci/role
+        operator: Equal
+        value: runner
+        effect: NoSchedule
+    terminationGracePeriodSeconds: 30
+    containers:
+      - name: runner
+        image: __RUNNER_IMAGE__
+        command: ["/usr/local/bin/entrypoint-arc.sh"]
+        securityContext:
+          privileged: true
+        # requests == limits with an integer CPU => Guaranteed QoS => the
+        # kubelet static CPU manager pins the pod to 4 exclusive cores.
+        # 3 pods fit a 16 vCPU / 64 GB node.
+        resources:
+          requests:
+            cpu: "4"
+            memory: 14Gi
+          limits:
+            cpu: "4"
+            memory: 14Gi
+        env:
+          - name: DOCKER_REGISTRY_MIRROR
+            value: __DOCKER_REGISTRY_MIRROR__
+        volumeMounts:
+          - name: docker
+            mountPath: /var/lib/docker
+          - name: ci-cache
+            mountPath: /opt/ci-cache
+    volumes:
+      # Per-pod Docker storage on the node's ephemeral (local SSD) OS disk.
+      - name: docker
+        emptyDir: {}
+      # Shared per node: composer, npm, Playwright browsers, tool cache.
+      - name: ci-cache
+        hostPath:
+          path: /var/lib/potti-ci-cache
+          type: DirectoryOrCreate

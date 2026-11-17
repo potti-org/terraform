@@ -1,0 +1,3 @@
+# gha-runner-scale-set-controller: runs on the always-on system node.
+nodeSelector:
+  kubernetes.azure.com/mode: system

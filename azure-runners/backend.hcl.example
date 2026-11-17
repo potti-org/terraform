@@ -1,0 +1,6 @@
+# Copy to backend.hcl (git-ignored), or let scripts/bootstrap-state.sh write it.
+resource_group_name  = "potti-ci-tfstate-rg"
+storage_account_name = "potticitfstateXXXX"
+container_name       = "tfstate"
+key                  = "azure-runners.tfstate"
+use_azuread_auth     = true
