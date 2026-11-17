@@ -136,12 +136,15 @@ resource "azurerm_kubernetes_cluster" "ci" {
     outbound_type       = "loadBalancer"
   }
 
-  # Runner nodes cost money only while jobs run: scale down fast once idle.
+  # Idle runner nodes stay 20 min: pushes come in bursts, and the next run then
+  # skips the 2-4 min node start and finds the node's caches (vendor/ snapshots,
+  # Composer, npm, Playwright) still warm. Cost: at most 20 idle minutes per node
+  # after each burst.
   # "priority" expander prefers the Spot pool, falls back to on-demand
   # (config: k8s/autoscaler-priority.yaml).
   auto_scaler_profile {
     expander                         = "priority"
-    scale_down_unneeded              = "5m"
+    scale_down_unneeded              = "20m"
     scale_down_delay_after_add       = "5m"
     scale_down_utilization_threshold = "0.3"
     max_node_provisioning_time       = "10m"

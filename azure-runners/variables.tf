@@ -52,9 +52,9 @@ variable "spot_max_nodes" {
 }
 
 variable "regular_max_nodes" {
-  description = "Max on-demand fallback nodes, used only when Spot capacity is unavailable. Bounded by the regional vCPU quota (128)."
+  description = "Max on-demand fallback nodes, used only when Spot capacity is unavailable. Bounded by the regional vCPU quota (128): 7 x 16 vCPU + the 2 vCPU system node = 114."
   type        = number
-  default     = 6
+  default     = 7
 }
 
 variable "dockerhub_cached_repos" {
