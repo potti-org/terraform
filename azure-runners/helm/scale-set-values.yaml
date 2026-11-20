@@ -5,8 +5,8 @@
 
 githubConfigSecret: arc-github-app
 
-# No containerMode: the pod runs its own privileged dockerd (same model as the
-# OVH fleet), so the workflow's service containers keep working unchanged.
+# No containerMode: the pod runs its own privileged dockerd (as the former OVH
+# fleet did), so the workflow's service containers keep working unchanged.
 
 listenerTemplate:
   spec:

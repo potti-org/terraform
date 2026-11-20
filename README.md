@@ -7,6 +7,8 @@
 # 🏗️ Potti Infrastructure
 
 > Enterprise-grade Terraform configuration for the Potti application infrastructure hosted on OVHcloud Public Cloud with defense-in-depth security architecture.
+>
+> Agents: start with `AGENTS.md`. The CI runner fleet on Azure is a separate stack in `azure-runners/`.
 
 ---
 
@@ -431,7 +433,7 @@ All infrastructure components ship logs to **[OVH Logs Data Platform (LDP)](http
 | `rules.tf` | Security groups and firewall rules |
 | `bastion.tf` | Bastion server instance |
 | `instance.tf` | Application server instances |
-| `ci.tf` | CI server instance |
+| `azure-runners/` | Separate stack: Azure AKS runner fleet for GitHub Actions — see `azure-runners/README.md` |
 | `load-balancer.tf` | Load balancer, listeners, pools, health checks |
 | `database.tf` | Managed PostgreSQL cluster |
 | `cache.tf` | Managed Valkey cluster |

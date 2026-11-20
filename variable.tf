@@ -153,24 +153,6 @@ variable "bastion_server" {
   }
 }
 
-variable "ci_server" {
-  description = "CI server configuration"
-  type = object({
-    image      = string
-    flavor     = string
-    name       = string
-    region     = string
-    ip_address = string
-  })
-  default = {
-    image      = "Ubuntu 24.04"
-    flavor     = "c3-32"
-    name       = "potti_ci"
-    region     = "EU-WEST-PAR-C"
-    ip_address = "10.101.3.60"
-  }
-}
-
 #
 # Load Balancer Configuration
 #

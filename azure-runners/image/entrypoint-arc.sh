@@ -21,7 +21,7 @@ chown runner:runner "$CI_CACHE" "$CI_CACHE"/{composer,npm,ms-playwright,toolcach
 
 # The kubelet static CPU manager gives this Guaranteed pod an exclusive cpuset.
 # PEST_TASKSET must name cores inside it (the workflow falls back to "0,1",
-# which would be outside the set on most pods). Same policy as the OVH fleet:
+# which would be outside the set on most pods). Policy kept from the former OVH fleet:
 # pin pest to the first two allowed cores.
 allowed=$(taskset -pc $$ | awk -F': ' '{print $2}')
 expand() {
